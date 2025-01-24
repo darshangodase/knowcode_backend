@@ -1,22 +1,24 @@
-const Web3Auth = require('@web3auth/node-sdk');
-const { web3AuthClientId } = require('../config');
+const Web3 = require('web3');
+const jwt = require('jsonwebtoken');
 
-const web3auth = new Web3Auth({
-  clientId: web3AuthClientId,
-  chainConfig: {
-    chainNamespace: 'eip155',
-    chainId: '0x1', // Ethereum Mainnet
-  },
-});
+const web3 = new Web3(process.env.WEB3_PROVIDER);
 
 const authenticateUser = async (token) => {
   try {
-    const userInfo = await web3auth.authenticateUser(token);
-    return userInfo;
-  } catch (err) {
-    console.error('Web3Auth Error:', err);
-    throw err;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded;
+  } catch (error) {
+    throw new Error('Invalid token');
   }
 };
 
-module.exports = { authenticateUser };
+const verifySignature = async (message, signature, address) => {
+  try {
+    const recoveredAddress = web3.eth.accounts.recover(message, signature);
+    return recoveredAddress.toLowerCase() === address.toLowerCase();
+  } catch (error) {
+    throw new Error('Invalid signature');
+  }
+};
+
+module.exports = { authenticateUser, verifySignature };
