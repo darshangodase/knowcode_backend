@@ -1,8 +1,11 @@
 const express = require("express");
 const app = express();
-const port = process.env.PORT || 3000;
+const port =1000;
 const mongoose = require("mongoose");
 const eWasteRoutes = require('./routes/eWasteRoutes');
+const { scheduleBiddingCheck } = require("./utils/scheduler");
+const bidRoutes = require("./routes/bidRoutes");
+
 const dotenv = require("dotenv");
 const cors = require("cors");
 dotenv.config();
@@ -18,8 +21,11 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
     console.log(err);
   });
 
-app.use('/api/ewaste', eWasteRoutes);
+scheduleBiddingCheck();
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.use('/api/ewaste', eWasteRoutes);
+app.use("/api/bid", bidRoutes); 
+
+app.listen(3000, () => {
+  console.log(`Server is running on port ${3000}`);
 });

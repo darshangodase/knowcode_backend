@@ -1,13 +1,16 @@
 const Ewaste = require('../models/Ewaste');
 const User = require('../models/User');
+const upload = require('../middleware/upload');
 const { cloudinary } = require('../utils/cloudinary');
 
 // Create E-Waste Item
 const createEwaste = async (req, res) => {
+  console.log("hitted");
+  
   const { user, itemName, category, condition, quantity, location, donationOrSale, price, biddingEnabled, biddingEndTime } = req.body;
+  
   try {
     // Validate required fields
-
     if (!user || !itemName || !category || !condition || !quantity || !location || !donationOrSale) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -23,34 +26,54 @@ const createEwaste = async (req, res) => {
     }
 
     // Upload image to Cloudinary
- 
-    let imageUrl = 'test';
+    let imageUrl = '';
+    const result = cloudinary.uploader.upload_stream(
+      { folder: 'image_uploads' },
+      async (error, response) => {
+        if (error) {
+          console.error('Error uploading image to Cloudinary:', error);  // Log detailed Cloudinary error
+          return res.status(500).json({ error: 'Error uploading image to Cloudinary' });
+        }
+
+        imageUrl = response.secure_url; // Image URL from Cloudinary
+        // Create new e-waste item
+        try {
+          const ewaste = new Ewaste({
+            user,
+            itemName,
+            category,
+            condition,
+            quantity,
+            location,
+            donationOrSale,
+            price: donationOrSale === 'sell' ? price : undefined,
+            biddingEnabled,
+            biddingEndTime: biddingEnabled ? biddingEndTime : undefined,
+            imageUrl, // Save the Cloudinary image URL
+          });
+          
+          await ewaste.save(); // Save e-waste to the database
+          res.status(201).json({ message: 'E-Waste created successfully', ewaste });
+        } catch (err) {
+          console.error('Error saving e-waste to database:', err);  // Log error if saving to database fails
+          return res.status(500).json({ error: 'Error saving e-waste to database' });
+        }
+      }
+    );
+
+    // Ensure you pass the image data buffer correctly
     if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path);
-      imageUrl = result.secure_url; // Get the secure URL of the uploaded image
+      result.end(req.file.buffer);
+    } else {
+      return res.status(400).json({ error: 'No image file provided' });
     }
 
-    // Create new e-waste item
-    const ewaste = new Ewaste({
-      user,
-      itemName,
-      category,
-      condition,
-      quantity,
-      location,
-      donationOrSale,
-      price: donationOrSale === 'sell' ? price : undefined,
-      biddingEnabled,
-      biddingEndTime: biddingEnabled ? biddingEndTime : undefined,
-      imageUrl, // Save the Cloudinary image URL
-    });
-    
-    await ewaste.save();
-    res.status(201).json({ message: 'E-Waste created successfully', ewaste });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error creating e-waste:', err);  // Log error for debugging
+    res.status(500).json({ error: 'Server error while creating e-waste' });
   }
 };
+
 
 // Get All E-Waste Items
 const getAllEwaste = async (req, res) => {

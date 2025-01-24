@@ -1,5 +1,7 @@
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const dotenv = require("dotenv");
+dotenv.config();
 
 // Configure Cloudinary
 cloudinary.config({
@@ -8,13 +10,4 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Set up Cloudinary storage for Multer
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'ewaste-recycling', // Folder name in Cloudinary
-    allowed_formats: ['jpg', 'jpeg', 'png'], // Allowed file formats
-  },
-});
-
-module.exports = { cloudinary, storage };
+module.exports = { cloudinary};

@@ -10,13 +10,14 @@ const EwasteSchema = new mongoose.Schema({
   donationOrSale: { type: String, enum: ["donate", "sell"], required: true },
   price: { type: Number },
   biddingEnabled: { type: Boolean },
-  biddingEndTime: { type: Date },
+  biddingEndTime: { type: Date, required: function () { return this.biddingEnabled; } },
   imageUrl: { type: String },
-  status: { type: String, default: "pending" },
-  bids: [
+  status: { type: String, enum: ["pending", "active", "stopped"], default: "pending" },
+  biddingStatus: { type: String, enum: ["active", "stopped", "completed"], default: "active" },
+  statusHistory: [
     {
-      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      amount: { type: Number },
+      status: { type: String },
+      timestamp: { type: Date, default: Date.now },
     },
   ],
 });
