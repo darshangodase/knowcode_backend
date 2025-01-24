@@ -5,6 +5,7 @@ const EwasteSchema = new mongoose.Schema({
   itemName: { type: String, required: true },
   category: { type: String, required: true },
   condition: { type: String, required: true },
+  weight: { type: Number, required: true },
   quantity: { type: Number, required: true },
   location: { type: String, required: true },
   donationOrSale: { type: String, enum: ["donate", "sell"], required: true },

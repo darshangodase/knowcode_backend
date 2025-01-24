@@ -5,15 +5,15 @@ const {
   getEwasteById,
   deleteEwaste
 } = require('../controllers/ewasteController');
-// const authMiddleware = require('../middleware/authMiddleware');
 const upload = require('../middleware/upload');
+const validateWalletAddress  = require('../middleware/validateWallet');
 
 const router = express.Router();
 
 // Public routes
-router.get('/', getAllEwaste);
+router.get('/all', getAllEwaste);
 router.get('/:id', getEwasteById);
-router.post('/', upload.single('file'), createEwaste); 
+router.post('/create', validateWalletAddress, upload.single('file'), createEwaste); 
 router.delete('/:id', deleteEwaste);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const app = express();
 const port =1000;
 const mongoose = require("mongoose");
 const eWasteRoutes = require('./routes/eWasteRoutes');
+const authRoutes = require('./routes/authRoutes');
 const { scheduleBiddingCheck } = require("./utils/scheduler");
 const bidRoutes = require("./routes/bidRoutes");
 
@@ -25,6 +26,7 @@ scheduleBiddingCheck();
 
 app.use('/api/ewaste', eWasteRoutes);
 app.use("/api/bid", bidRoutes); 
+app.use("/api/auth", authRoutes);
 
 app.listen(3000, () => {
   console.log(`Server is running on port ${3000}`);

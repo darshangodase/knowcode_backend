@@ -5,22 +5,24 @@ const { cloudinary } = require('../utils/cloudinary');
 
 // Create E-Waste Item
 const createEwaste = async (req, res) => {
-  console.log("hitted");
+  const { itemName, category, condition, weight, quantity, location, donationOrSale, price, biddingEnabled, biddingEndTime } = req.body;
   
-  const { user, itemName, category, condition, quantity, location, donationOrSale, price, biddingEnabled, biddingEndTime } = req.body;
-  
+  const user = req.user; // This should be set by the validateWalletAddress middleware
+  console.log('User:', user);
+  if (!user || !user._id) {
+    return res.status(400).json({ error: 'User is not authenticated or missing _id' });
+  }
+
   try {
     // Validate required fields
-    if (!user || !itemName || !category || !condition || !quantity || !location || !donationOrSale) {
+    if (!itemName || !category || !condition || !weight || !quantity || !location || !donationOrSale) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // If selling, validate price
     if (donationOrSale === 'sell' && !price) {
       return res.status(400).json({ error: 'Price is required for selling' });
     }
 
-    // If bidding is enabled, validate bidding end time
     if (biddingEnabled && !biddingEndTime) {
       return res.status(400).json({ error: 'Bidding end time is required if bidding is enabled' });
     }
@@ -31,17 +33,18 @@ const createEwaste = async (req, res) => {
       { folder: 'image_uploads' },
       async (error, response) => {
         if (error) {
-          console.error('Error uploading image to Cloudinary:', error);  // Log detailed Cloudinary error
+          console.error('Error uploading image to Cloudinary:', error);
           return res.status(500).json({ error: 'Error uploading image to Cloudinary' });
         }
 
         imageUrl = response.secure_url; // Image URL from Cloudinary
-        // Create new e-waste item
+
         try {
           const ewaste = new Ewaste({
-            user,
+            user: user._id,  
             itemName,
             category,
+            weight,
             condition,
             quantity,
             location,
@@ -49,19 +52,22 @@ const createEwaste = async (req, res) => {
             price: donationOrSale === 'sell' ? price : undefined,
             biddingEnabled,
             biddingEndTime: biddingEnabled ? biddingEndTime : undefined,
-            imageUrl, // Save the Cloudinary image URL
+            imageUrl,  // Save the Cloudinary image URL
           });
-          
+
           await ewaste.save(); // Save e-waste to the database
+
+          user.recycledItems.push(ewaste._id);
+          await user.save();
+
           res.status(201).json({ message: 'E-Waste created successfully', ewaste });
         } catch (err) {
-          console.error('Error saving e-waste to database:', err);  // Log error if saving to database fails
+          console.error('Error saving e-waste to database:', err);
           return res.status(500).json({ error: 'Error saving e-waste to database' });
         }
       }
     );
 
-    // Ensure you pass the image data buffer correctly
     if (req.file) {
       result.end(req.file.buffer);
     } else {
@@ -69,8 +75,8 @@ const createEwaste = async (req, res) => {
     }
 
   } catch (err) {
-    console.error('Error creating e-waste:', err);  // Log error for debugging
-    res.status(500).json({ error: 'Server error while creating e-waste' });
+    console.error('Error creating e-waste:', err);
+    return res.status(500).json({ error: 'Server error while creating e-waste' });
   }
 };
 
@@ -78,9 +84,7 @@ const createEwaste = async (req, res) => {
 // Get All E-Waste Items
 const getAllEwaste = async (req, res) => {
   try {
-    const ewasteItems = await Ewaste.find()
-      .populate('user', 'walletAddress')
-      .populate('bids.user', 'walletAddress');
+    const ewasteItems = await Ewaste.find();
     res.status(200).json(ewasteItems);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -89,17 +93,19 @@ const getAllEwaste = async (req, res) => {
 
 // Get E-Waste Item by ID
 const getEwasteById = async (req, res) => {
-  const { id } = req.params;
-
+  const { id } = req.params; // Extracting the ID from the request parameters
+  
   try {
+    // Check if the wallet address is valid
+    // Retrieve the e-waste item by its ID
     const ewaste = await Ewaste.findById(id)
-      .populate('user', 'walletAddress')
-      .populate('bids.user', 'walletAddress');
     if (!ewaste) {
       return res.status(404).json({ error: 'E-Waste item not found' });
     }
+    // Return the e-waste item
     res.status(200).json(ewaste);
   } catch (err) {
+    console.error('Error retrieving e-waste by ID:', err);
     res.status(500).json({ error: err.message });
   }
 };
