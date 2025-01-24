@@ -5,9 +5,9 @@ const { cloudinary } = require('../utils/cloudinary');
 // Create E-Waste Item
 const createEwaste = async (req, res) => {
   const { user, itemName, category, condition, quantity, location, donationOrSale, price, biddingEnabled, biddingEndTime } = req.body;
-
   try {
     // Validate required fields
+
     if (!user || !itemName || !category || !condition || !quantity || !location || !donationOrSale) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -23,7 +23,8 @@ const createEwaste = async (req, res) => {
     }
 
     // Upload image to Cloudinary
-    let imageUrl = '';
+ 
+    let imageUrl = 'test';
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path);
       imageUrl = result.secure_url; // Get the secure URL of the uploaded image
@@ -43,7 +44,7 @@ const createEwaste = async (req, res) => {
       biddingEndTime: biddingEnabled ? biddingEndTime : undefined,
       imageUrl, // Save the Cloudinary image URL
     });
-
+    
     await ewaste.save();
     res.status(201).json({ message: 'E-Waste created successfully', ewaste });
   } catch (err) {
