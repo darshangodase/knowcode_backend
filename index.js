@@ -18,7 +18,7 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
     console.log(err);
   });
 
-  app.use('/ewaste', eWasteRoutes);
+app.use('/api/ewaste', eWasteRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

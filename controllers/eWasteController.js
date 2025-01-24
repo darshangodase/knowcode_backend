@@ -157,5 +157,5 @@ module.exports = {
   getEwasteById,
   placeBid,
   updateEwasteStatus,
-  deleteEwaste,
+  deleteEwaste
 };
